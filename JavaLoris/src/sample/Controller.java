@@ -14,7 +14,8 @@ public class Controller {
 
     private Button attackButton;
     private Button pingButton;
-    private TextField ipAddrField;
+    private TextField netAddrField;
+    private TextField portField;
     private Slider numConnectionsSlider;
 
     private Label statusLabel;
@@ -22,11 +23,10 @@ public class Controller {
 
     private String status;
 
-    private SlowLoris sl;
-
     public Controller() {
         status = "Waiting for command...";
-        setIpAddrField();
+        setNetAddrField();
+        setPortField();
         setAttackButton();
         setPingButton();
         setNumConnectionsSlider();
@@ -40,38 +40,40 @@ public class Controller {
         attackButton = new Button("Launch Attack");
         attackButton.setPrefWidth(100);
         attackButton.setOnAction((ActionEvent e) -> {
-            System.out.println("button pressed.");
             status = "Attacking...";
             setStatusLabel();
-            sl = new SlowLoris((int) Math.floor(numConnectionsSlider.getValue()));
-            if(sl.setIPAddr(ipAddrField.getText())) {
-                status = "Attempting attack...";
+            if(netAddrField.getText().length() == 0) {
+                status = "Please enter a target address";
                 setStatusLabel();
-                Task async = new Task<Void>() {
-                    @Override public Void call() {
-                        try {
-                            Platform.runLater(
-                                    new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            sl.performAttack();
-                                            status = "Attack completed!";
-                                            setStatusLabel();
-                                        }
-                                    }
-                            );
-                        } catch (Exception e) {
-                            status = "Attack error";
-                            System.err.println(e);
-                            e.printStackTrace();
-                        }
-                        return null;
-                    }
-                };
-            } else {
-                status = "IP Address Invalid";
-                setStatusLabel();
+                return;
             }
+            SlowLoris sl = createSlowLoris();
+            status = "Attempting attack...";
+            setStatusLabel();
+            Task async = new Task<Void>() {
+                @Override public Void call() {
+                    try {
+                        Platform.runLater(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        System.out.println("running attack");
+                                        sl.performAttack();
+                                        status = "Attack completed!";
+                                        setStatusLabel();
+                                    }
+                                }
+                        );
+                    } catch (Exception e) {
+                        status = "Attack error: " + e.getMessage();
+                        System.err.println(e);
+                        e.printStackTrace();
+                    }
+                    return null;
+                }
+            };
+            Thread t = new Thread(async);
+            t.start();
         });
     }
 
@@ -79,20 +81,62 @@ public class Controller {
         pingButton = new Button("Ping Target");
         pingButton.setPrefWidth(100);
         pingButton.setOnAction((ActionEvent e) -> {
-            System.out.println("performing ping");
             status = "Performing ping...";
-            try {
-                Thread.sleep(1000);
-            } catch(Exception ex) {
-
-            }
-            status = "Waiting for command...";
+            setStatusLabel();
+            SlowLoris pingSL = createSlowLoris();
+            Task async = new Task<Void>() {
+                @Override public Void call() {
+                    try {
+                        Platform.runLater(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        System.out.println("running ping");
+                                        status = pingSL.pingTarget();
+                                        setStatusLabel();
+                                    }
+                                }
+                        );
+                    } catch (Exception e) {
+                        status = "Attack error";
+                        System.err.println(e);
+                        e.printStackTrace();
+                    }
+                    return null;
+                }
+            };
+            Thread t = new Thread(async);
+            t.start();
         });
     }
 
-    public void setIpAddrField() {
-        ipAddrField = new TextField();
-        ipAddrField.setPrefWidth(200);
+    private SlowLoris createSlowLoris() {
+        SlowLoris sl;
+        if(portField.getText().length() > 0) {
+            int parsedPort = 80;
+            try {
+                parsedPort = Integer.parseInt(portField.getText());
+            } catch (Exception ethree) {
+                ethree.printStackTrace();
+            } finally {
+                sl = new SlowLoris((int) (Math.floor(numConnectionsSlider.getValue())),
+                        netAddrField.getText(), parsedPort);
+            }
+        } else {
+            sl = new SlowLoris((int) (Math.floor(numConnectionsSlider.getValue())),
+                    netAddrField.getText());
+        }
+        return sl;
+    }
+
+    public void setNetAddrField() {
+        netAddrField = new TextField();
+        netAddrField.setPrefWidth(200);
+    }
+
+    public void setPortField() {
+        portField = new TextField();
+        portField.setPrefWidth(100);
     }
 
     public void setNumConnectionsSlider() {
@@ -110,17 +154,23 @@ public class Controller {
         statusLabel.setText(status);
     }
 
-    public TextField getIPAddrField() {
-        return ipAddrField;
+    public TextField getNetAddrField() {
+        return netAddrField;
     }
+
+    public TextField getPortField() { return portField; }
 
     public Label getStatusLabel() {
         return statusLabel;
     }
 
-    public Label getIPAddrLabel() {
-        return new Label("Target IP Address:");
+    public Label getNetAddrLabel() {
+        Label temp = new Label("Target Address:");
+        temp.setMinWidth(100);
+        return temp;
     }
+
+    public Label getPortLabel() { return new Label("Target Port:"); }
 
     public Slider getNumConnectionsSlider() {
         return numConnectionsSlider;

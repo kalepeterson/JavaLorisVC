@@ -32,11 +32,17 @@ public class View {
         //Setting up the title pane
         container.add(mainCtrl.getStatusLabel(), 0, 0, 3, 1);
         //Setting up the IP Address pane
-        HBox usernamePane = new HBox();
-        usernamePane.setPadding(new Insets(0, 85, 0, 0));
-        usernamePane.setSpacing(40);
-        usernamePane.getChildren().addAll(mainCtrl.getIPAddrLabel(), mainCtrl.getIPAddrField());
-        container.add(usernamePane, 0, 2, 3, 1);
+        HBox ippane = new HBox();
+        ippane.setPadding(new Insets(0, 75, 0, 0));
+        ippane.setSpacing(10);
+        ippane.getChildren().addAll(mainCtrl.getNetAddrLabel(), mainCtrl.getNetAddrField());
+        container.add(ippane, 0, 2, 3, 1);
+        //Setting up the port number pane
+        HBox portpane = new HBox();
+        portpane.setPadding(new Insets(0, 85, 0, 0));
+        portpane.setSpacing(20);
+        portpane.getChildren().addAll(mainCtrl.getPortLabel(), mainCtrl.getPortField());
+        container.add(portpane, 0, 3, 3, 1);
         //Setting up the action buttons
         HBox actionButtonsPane = new HBox();
         actionButtonsPane.setPadding(new Insets(0, 45, 0, 0));
