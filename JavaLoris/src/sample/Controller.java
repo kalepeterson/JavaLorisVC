@@ -1,14 +1,17 @@
 package sample;
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
-import SlowLoris.SlowLoris;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import SlowLoris.*;
+
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 
 public class Controller {
 
@@ -17,13 +20,18 @@ public class Controller {
     private TextField netAddrField;
     private TextField portField;
     private Slider numConnectionsSlider;
+    private ToggleGroup keepAliveGrp;
+    private RadioButton keepAliveBtn;
+    private RadioButton noKeepBtn;
 
     private Label statusLabel;
     private Label numConnectionsLabel;
 
     private String status;
+    private boolean keepAlive;
 
     public Controller() {
+        keepAlive = false;
         status = "Waiting for command...";
         setNetAddrField();
         setPortField();
@@ -34,6 +42,7 @@ public class Controller {
         setStatusLabel();
         numConnectionsLabel = new Label();
         setNumConnectionsLabel();
+        setKeepAliveGrp();
     }
 
     public void setAttackButton() {
@@ -126,6 +135,7 @@ public class Controller {
             sl = new SlowLoris((int) (Math.floor(numConnectionsSlider.getValue())),
                     netAddrField.getText());
         }
+        sl.setKeepAliveAbuse(keepAlive);
         return sl;
     }
 
@@ -148,6 +158,40 @@ public class Controller {
         numConnectionsSlider.setOnMouseReleased((MouseEvent me) -> {
             setNumConnectionsLabel();
         });
+    }
+
+    private void setKeepAliveGrp() {
+        keepAliveGrp = new ToggleGroup();
+        keepAliveGrp.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+            public void changed(ObservableValue<? extends Toggle> ov,
+                                Toggle oldToggle, Toggle newToggle) {
+                if (keepAliveGrp.getSelectedToggle() != null) {
+                    if(keepAliveGrp.getSelectedToggle().getUserData().equals("KeepAlive")) {
+                        keepAlive = true;
+                    } else {
+                        keepAlive = false;
+                    }
+                }
+            }
+        });
+    }
+
+    public ToggleGroup getKeepAliveGrp() {
+        return keepAliveGrp;
+    }
+
+    public RadioButton getKeepAliveBtn(){
+        keepAliveBtn = new RadioButton("Use Keep Alive Abuse");
+        keepAliveBtn.setUserData("KeepAlive");
+        keepAliveBtn.setToggleGroup(keepAliveGrp);
+        return keepAliveBtn;
+    }
+
+    public RadioButton getNoKeepBtn(){
+        noKeepBtn = new RadioButton("Use Incomplete Requests");
+        noKeepBtn.setUserData("NoKeep");
+        noKeepBtn.setToggleGroup(keepAliveGrp);
+        return noKeepBtn;
     }
 
     public void setStatusLabel() {

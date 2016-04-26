@@ -5,6 +5,7 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -19,7 +20,7 @@ public class View {
 
     public View() {
         container = new GridPane();
-        scene = new Scene(container, 400, 300);
+        scene = new Scene(container, 700, 600);
         //Setting the view parameters
         for(int i = 0; i < 3; i++){
             container.getColumnConstraints().add(new ColumnConstraints(100));
@@ -43,16 +44,24 @@ public class View {
         portpane.setSpacing(20);
         portpane.getChildren().addAll(mainCtrl.getPortLabel(), mainCtrl.getPortField());
         container.add(portpane, 0, 3, 3, 1);
+        //Setting up the keep alive radio buttons
+        HBox keepalivepane = new HBox();
+        ToggleGroup keepalivegrp = mainCtrl.getKeepAliveGrp();
+        keepalivepane.getChildren().addAll(mainCtrl.getKeepAliveBtn(),
+                mainCtrl.getNoKeepBtn()
+        );
+        keepalivegrp.selectToggle(keepalivegrp.getToggles().get(0));
+        container.add(keepalivepane, 0, 4, 3, 1);
         //Setting up the action buttons
         HBox actionButtonsPane = new HBox();
         actionButtonsPane.setPadding(new Insets(0, 45, 0, 0));
         actionButtonsPane.setSpacing(10);
         actionButtonsPane.getChildren().addAll(mainCtrl.getAttackButton(), mainCtrl.getPingButton());
-        container.add(actionButtonsPane, 0, 4, 3, 1);
+        container.add(actionButtonsPane, 0, 5, 3, 1);
         //Setting up connections slider
-        container.add(mainCtrl.getNumConnectionsSlider(),0,5,3,1);
+        container.add(mainCtrl.getNumConnectionsSlider(),0,6,3,1);
         //Setting up connections label
-        container.add(mainCtrl.getNumConnectionsLabel(),0,6,3,1);
+        container.add(mainCtrl.getNumConnectionsLabel(),0,7,3,1);
     }
 
     public Scene getPage(){
