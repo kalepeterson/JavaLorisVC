@@ -19,10 +19,14 @@ public class Controller {
     private Button pingButton;
     private TextField netAddrField;
     private TextField portField;
+    private TextField urlPathField;
     private Slider numConnectionsSlider;
     private ToggleGroup keepAliveGrp;
     private RadioButton keepAliveBtn;
     private RadioButton noKeepBtn;
+    private ToggleGroup requestTypeGrp;
+    private RadioButton requestGetBtn;
+    private RadioButton requestPostBtn;
 
     // Label objects that will be dynamically updated.
     private Label statusLabel;
@@ -31,6 +35,7 @@ public class Controller {
     // Primitive fields.
     private String status;
     private boolean keepAlive;
+    private boolean useGet;
 
     /**
      * Constructor. Initializes fields and attaches the application logic to
@@ -38,12 +43,16 @@ public class Controller {
      */
     public Controller() {
         keepAlive = false;
+        useGet = false;
         status = "Waiting for command...";
 
         setNetAddrField();
         setPortField();
+        setUrlPathField();
+
         setAttackButton();
         setPingButton();
+
         setNumConnectionsSlider();
 
         statusLabel = new Label();
@@ -53,6 +62,7 @@ public class Controller {
         setNumConnectionsLabel();
 
         setKeepAliveGrp();
+        setRequestTypeGrp();
     }
 
     /**
@@ -72,7 +82,7 @@ public class Controller {
             setStatusLabel();
 
             // Check if a URL or IP address has not been entered
-            if(netAddrField.getText().length() == 0) {
+            if(netAddrField.getText().trim().length() == 0) {
                 // Stop here if there is not any input
                 status = "Please enter a target address";
                 setStatusLabel();
@@ -196,6 +206,12 @@ public class Controller {
         // Configure the SlowLoris object to use complete Keep-Alive requests or not
         sl.setKeepAliveAbuse(keepAlive);
 
+        // Configure the SlowLoris object to use GET requests or not
+        sl.setUseGetRequest(useGet);
+
+        // Configure the SlowLoris object to use the URL path specified in the UI
+        sl.setUrlPath(urlPathField.getText());
+
         // Return the configured SlowLoris object.
         return sl;
     }
@@ -214,6 +230,14 @@ public class Controller {
     public void setPortField() {
         portField = new TextField();
         portField.setPrefWidth(100);
+    }
+
+    /**
+     * Instantiates the URL or IP address TextField
+     */
+    public void setUrlPathField() {
+        urlPathField = new TextField();
+        urlPathField.setPrefWidth(200);
     }
 
     /**
@@ -294,6 +318,65 @@ public class Controller {
     }
 
     /**
+     * Instantiates the radio button group for GET or POST requests
+     */
+    private void setRequestTypeGrp() {
+        requestTypeGrp = new ToggleGroup();
+
+        requestTypeGrp.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+            public void changed(ObservableValue<? extends Toggle> ov,
+                                Toggle oldToggle, Toggle newToggle) {
+
+                // Make sure a radio button is selected
+                if (requestTypeGrp.getSelectedToggle() != null) {
+                    // If so, check if it is the Use Keep Alive Abuse button
+                    if(requestTypeGrp.getSelectedToggle().getUserData().equals("GET")) {
+                        useGet = true;
+                    } else {
+                        useGet = false;
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Retrieves the created request type ToggleGroup
+     * @return The ToggleGroup for using GET or POST requests
+     */
+    public ToggleGroup getRequestTypeGrp() {
+        return requestTypeGrp;
+    }
+
+    /**
+     * Retrieves the created GET request RadioButton
+     * @return The RadioButton for using GET requests
+     */
+    public RadioButton getGetBtn(){
+        // The String passed to the constructor is the label for the UI.
+        requestGetBtn = new RadioButton("Use GET Requests");
+        // The UserData is what to check for when a radio button is selected.
+        requestGetBtn.setUserData("GET");
+        // Tell the RadioButton which ToggleGroup it belongs to.
+        requestGetBtn.setToggleGroup(requestTypeGrp);
+        // Make it look pretty.
+        requestGetBtn.setMinWidth(150);
+        return requestGetBtn;
+    }
+
+    /**
+     * Retrieves the created POST request RadioButton
+     * @return The RadioButton for using POST requests
+     */
+    public RadioButton getPostBtn(){
+        requestPostBtn = new RadioButton("Use POST Requests");
+        requestPostBtn.setUserData("POST");
+        requestPostBtn.setToggleGroup(requestTypeGrp);
+        requestPostBtn.setMinWidth(150);
+        return requestPostBtn;
+    }
+
+    /**
      * Updates the status label's text.
      */
     public void setStatusLabel() {
@@ -313,6 +396,12 @@ public class Controller {
      * @return TextField for target port
      */
     public TextField getPortField() { return portField; }
+
+    /**
+     * Retrieves the TextField for the target URL path
+     * @return TextField for target URL path
+     */
+    public TextField getUrlPathField() { return urlPathField; }
 
     /**
      * Retrieves the status label
@@ -337,6 +426,16 @@ public class Controller {
      * @return Label for the port field
      */
     public Label getPortLabel() { return new Label("Target Port:"); }
+
+    /**
+     * Retrieves the label for the URL path field
+     * @return Label for the URL path field
+     */
+    public Label getUrlPathLabel() {
+        Label temp = new Label("URL path:");
+        temp.setMinWidth(100);
+        return temp;
+    }
 
     /**
      * Retrieves the Slider for the number of connections

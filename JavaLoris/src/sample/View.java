@@ -50,14 +50,21 @@ public class View {
         ippane.setPadding(new Insets(0, 75, 0, 0));
         ippane.setSpacing(10);
         ippane.getChildren().addAll(mainCtrl.getNetAddrLabel(), mainCtrl.getNetAddrField());
-        container.add(ippane, 0, 2, 3, 1);
+        container.add(ippane, 0, 1, 3, 1);
 
         // Setting up the port number pane
         HBox portpane = new HBox();
         portpane.setPadding(new Insets(0, 85, 0, 0));
         portpane.setSpacing(20);
         portpane.getChildren().addAll(mainCtrl.getPortLabel(), mainCtrl.getPortField());
-        container.add(portpane, 0, 3, 3, 1);
+        container.add(portpane, 0, 2, 3, 1);
+
+        // Setting up the URL Path pane
+        HBox pathpane = new HBox();
+        pathpane.setPadding(new Insets(0, 85, 0, 0));
+        pathpane.setSpacing(20);
+        pathpane.getChildren().addAll(mainCtrl.getUrlPathLabel(), mainCtrl.getUrlPathField());
+        container.add(pathpane, 0, 3, 3, 1);
 
         // Setting up the keep alive radio buttons
         HBox keepalivepane = new HBox();
@@ -69,18 +76,28 @@ public class View {
         keepalivegrp.selectToggle(keepalivegrp.getToggles().get(0));
         container.add(keepalivepane, 0, 4, 3, 1);
 
+        // Setting up the GET or POST radio buttons
+        HBox getpostpane = new HBox();
+        ToggleGroup getpostgrp = mainCtrl.getRequestTypeGrp();
+        getpostpane.getChildren().addAll(mainCtrl.getGetBtn(),
+                mainCtrl.getPostBtn()
+        );
+        // Select the first button in the group by default
+        getpostgrp.selectToggle(getpostgrp.getToggles().get(0));
+        container.add(getpostpane, 0, 5, 3, 1);
+
         // Setting up the ping and attack buttons
         HBox actionButtonsPane = new HBox();
         actionButtonsPane.setPadding(new Insets(0, 45, 0, 0));
         actionButtonsPane.setSpacing(10);
         actionButtonsPane.getChildren().addAll(mainCtrl.getAttackButton(), mainCtrl.getPingButton());
-        container.add(actionButtonsPane, 0, 5, 3, 1);
+        container.add(actionButtonsPane, 0, 6, 3, 1);
 
         // Setting up the number of connections slider
-        container.add(mainCtrl.getNumConnectionsSlider(),0,6,3,1);
+        container.add(mainCtrl.getNumConnectionsSlider(),0,7,3,1);
 
         // Setting up the label for the slider
-        container.add(mainCtrl.getNumConnectionsLabel(),0,7,3,1);
+        container.add(mainCtrl.getNumConnectionsLabel(),0,8,3,1);
     }
 
     /**
