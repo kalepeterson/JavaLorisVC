@@ -96,8 +96,14 @@ public class View {
         // Setting up the number of connections slider
         container.add(mainCtrl.getNumConnectionsSlider(),0,7,3,1);
 
-        // Setting up the label for the slider
-        container.add(mainCtrl.getNumConnectionsLabel(),0,8,3,1);
+        // Setting up the slider increment/decrement buttons
+        HBox sliderStatsPane = new HBox();
+        sliderStatsPane.setPadding(new Insets(0, 40, 0, 0));
+        sliderStatsPane.setSpacing(10);
+        sliderStatsPane.getChildren().addAll(mainCtrl.getNumConnectionsLabel(),
+            mainCtrl.getDecNumConnButton(), mainCtrl.getIncNumConnButton()
+        );
+        container.add(sliderStatsPane, 0, 8, 3, 1);
     }
 
     /**

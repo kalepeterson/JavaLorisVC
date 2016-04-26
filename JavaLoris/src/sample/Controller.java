@@ -17,6 +17,8 @@ public class Controller {
     // User input objects that will be provided to the View.
     private Button attackButton;
     private Button pingButton;
+    private Button incNumConn;
+    private Button decNumConn;
     private TextField netAddrField;
     private TextField portField;
     private TextField urlPathField;
@@ -52,6 +54,8 @@ public class Controller {
 
         setAttackButton();
         setPingButton();
+        setIncNumConnButton();
+        setDecNumConnButton();
 
         setNumConnectionsSlider();
 
@@ -173,6 +177,36 @@ public class Controller {
             // Kick off the thread
             Thread t = new Thread(async);
             t.start();
+        });
+    }
+
+    /**
+     * Initializes the increment number of connections button.
+     */
+    public void setIncNumConnButton() {
+        // Create the button
+        incNumConn = new Button(" + Increment");
+        incNumConn.setMinWidth(100);
+
+        // Tell the button what to do
+        incNumConn.setOnAction((ActionEvent e) -> {
+            numConnectionsSlider.increment();
+            setNumConnectionsLabel();
+        });
+    }
+
+    /**
+     * Initializes the decrement number of connections button.
+     */
+    public void setDecNumConnButton() {
+        // Create the button
+        decNumConn = new Button(" - Decrement");
+        decNumConn.setMinWidth(100);
+
+        // Tell the button what to do
+        decNumConn.setOnAction((ActionEvent e) -> {
+            numConnectionsSlider.decrement();
+            setNumConnectionsLabel();
         });
     }
 
@@ -461,6 +495,21 @@ public class Controller {
         return pingButton;
     }
 
+    /**
+     * Retrieves the Button that increments number of connections
+     * @return Button for incrementing number of connections
+     */
+    public Button getIncNumConnButton() {
+        return incNumConn;
+    }
+
+    /**
+     * Retrieves the Button that decrements number of connections
+     * @return Button for decrementing number of connections
+     */
+    public Button getDecNumConnButton() {
+        return decNumConn;
+    }
 
     /**
      * Instantiates the Label for the number of connections slider
